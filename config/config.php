@@ -7,6 +7,14 @@ define('DB_USER', 'zenfamili');
 define('DB_PASS', 'gc6Xc91@1');
 define('DB_NAME', 'zenfamili');
 
+// Global user ID - this would normally come from a login system
+$id_oo = 1; 
+define('CURRENT_USER_ID', $id_oo);
+
+// Global membre ID - this would normally come from a login system
+$id_oo = 1; 
+define('CURRENT_MEMBRE_ID', $id_oo);
+
 // Other configuration parameters
 define('APP_NAME', 'Financial Visualization');
 define('APP_VERSION', '1.0.0');

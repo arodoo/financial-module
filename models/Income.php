@@ -3,9 +3,12 @@ require_once __DIR__ . '/../config/database.php';
 
 class Income {
     private $conn;
+    private $membreId;
 
     public function __construct() {
+        global $id_oo;
         $this->conn = getDbConnection();
+        $this->membreId = $id_oo;
     }
 
     public function getAllCategories() {
@@ -18,8 +21,8 @@ class Income {
         $sql = "SELECT t.*, c.name as category_name 
                 FROM income_transactions t 
                 JOIN income_categories c ON t.category_id = c.id
-                WHERE 1=1";
-        $params = [];
+                WHERE t.membre_id = :membre_id";
+        $params = [':membre_id' => $this->membreId];
 
         if ($startDate) {
             $sql .= " AND t.transaction_date >= :start_date";
@@ -45,11 +48,12 @@ class Income {
 
     public function addIncome($categoryId, $amount, $description, $transactionDate) {
         $stmt = $this->conn->prepare(
-            "INSERT INTO income_transactions (category_id, amount, description, transaction_date) 
-             VALUES (:category_id, :amount, :description, :transaction_date)"
+            "INSERT INTO income_transactions (membre_id, category_id, amount, description, transaction_date) 
+             VALUES (:membre_id, :category_id, :amount, :description, :transaction_date)"
         );
         
         return $stmt->execute([
+            ':membre_id' => $this->membreId,
             ':category_id' => $categoryId,
             ':amount' => $amount,
             ':description' => $description,
@@ -58,8 +62,8 @@ class Income {
     }
 
     public function getTotalIncome($startDate = null, $endDate = null) {
-        $sql = "SELECT SUM(amount) as total FROM income_transactions WHERE 1=1";
-        $params = [];
+        $sql = "SELECT SUM(amount) as total FROM income_transactions WHERE membre_id = :membre_id";
+        $params = [':membre_id' => $this->membreId];
 
         if ($startDate) {
             $sql .= " AND transaction_date >= :start_date";
