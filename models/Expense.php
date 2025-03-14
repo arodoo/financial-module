@@ -1,63 +1,80 @@
 <?php
+require_once __DIR__ . '/../config/database.php';
+
 class Expense {
-    private $id;
-    private $description;
-    private $amount;
-    private $date;
+    private $conn;
 
-    public function __construct($id, $description, $amount, $date) {
-        $this->id = $id;
-        $this->description = $description;
-        $this->amount = $amount;
-        $this->date = $date;
+    public function __construct() {
+        $this->conn = getDbConnection();
     }
 
-    public function getId() {
-        return $this->id;
-    }
-
-    public function getDescription() {
-        return $this->description;
-    }
-
-    public function getAmount() {
-        return $this->amount;
-    }
-
-    public function getDate() {
-        return $this->date;
-    }
-
-    public function setDescription($description) {
-        $this->description = $description;
-    }
-
-    public function setAmount($amount) {
-        $this->amount = $amount;
-    }
-
-    public function setDate($date) {
-        $this->date = $date;
-    }
-
-    public static function fetchAllExpenses($pdo) {
-        $stmt = $pdo->prepare("SELECT * FROM expenses");
+    public function getAllCategories() {
+        $stmt = $this->conn->prepare("SELECT * FROM expense_categories ORDER BY name");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public static function addExpense($pdo, $description, $amount, $date) {
-        $stmt = $pdo->prepare("INSERT INTO expenses (description, amount, date) VALUES (:description, :amount, :date)");
-        $stmt->bindParam(':description', $description);
-        $stmt->bindParam(':amount', $amount);
-        $stmt->bindParam(':date', $date);
-        return $stmt->execute();
+    public function getExpenseTransactions($startDate = null, $endDate = null, $categoryId = null) {
+        $sql = "SELECT t.*, c.name as category_name 
+                FROM expense_transactions t 
+                JOIN expense_categories c ON t.category_id = c.id
+                WHERE 1=1";
+        $params = [];
+
+        if ($startDate) {
+            $sql .= " AND t.transaction_date >= :start_date";
+            $params[':start_date'] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= " AND t.transaction_date <= :end_date";
+            $params[':end_date'] = $endDate;
+        }
+
+        if ($categoryId) {
+            $sql .= " AND t.category_id = :category_id";
+            $params[':category_id'] = $categoryId;
+        }
+
+        $sql .= " ORDER BY t.transaction_date DESC";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public static function deleteExpense($pdo, $id) {
-        $stmt = $pdo->prepare("DELETE FROM expenses WHERE id = :id");
-        $stmt->bindParam(':id', $id);
-        return $stmt->execute();
+    public function addExpense($categoryId, $amount, $description, $transactionDate) {
+        $stmt = $this->conn->prepare(
+            "INSERT INTO expense_transactions (category_id, amount, description, transaction_date) 
+             VALUES (:category_id, :amount, :description, :transaction_date)"
+        );
+        
+        return $stmt->execute([
+            ':category_id' => $categoryId,
+            ':amount' => $amount,
+            ':description' => $description,
+            ':transaction_date' => $transactionDate
+        ]);
+    }
+
+    public function getTotalExpense($startDate = null, $endDate = null) {
+        $sql = "SELECT SUM(amount) as total FROM expense_transactions WHERE 1=1";
+        $params = [];
+
+        if ($startDate) {
+            $sql .= " AND transaction_date >= :start_date";
+            $params[':start_date'] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= " AND transaction_date <= :end_date";
+            $params[':end_date'] = $endDate;
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['total'] ?? 0;
     }
 }
 ?>

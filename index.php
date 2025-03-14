@@ -108,7 +108,8 @@ if (!array_key_exists($action, $modules)) {
                             </div>';
                         break;
                     case 'income-expense':
-                        echo '<div class="alert alert-info">Track and manage your income and expenses here.</div>';
+                        // Include the income-expense module
+                        include 'modules/income-expense/index.php';
                         break;
                     case 'asset-management':
                         echo '<div class="alert alert-info">Manage your assets and view their performance.</div>';
