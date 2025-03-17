@@ -45,7 +45,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
         <div class="card text-bg-primary h-100">
             <div class="card-body">
                 <h5 class="card-title">Revenu Total</h5>
-                <h3 class="card-text">₱<?php echo number_format($totalIncome, 2); ?></h3>
+                <h3 class="card-text">€<?php echo number_format($totalIncome, 2); ?></h3>
                 <p class="card-text"><small>Mois Courant</small></p>
             </div>
         </div>
@@ -54,7 +54,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
         <div class="card text-bg-danger h-100">
             <div class="card-body">
                 <h5 class="card-title">Dépenses Totales</h5>
-                <h3 class="card-text">₱<?php echo number_format($totalExpense, 2); ?></h3>
+                <h3 class="card-text">€<?php echo number_format($totalExpense, 2); ?></h3>
                 <p class="card-text"><small>Mois Courant</small></p>
             </div>
         </div>
@@ -63,7 +63,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
         <div class="card <?php echo $netBalance >= 0 ? 'text-bg-success' : 'text-bg-warning'; ?> h-100">
             <div class="card-body">
                 <h5 class="card-title">Solde Net</h5>
-                <h3 class="card-text">₱<?php echo number_format($netBalance, 2); ?></h3>
+                <h3 class="card-text">€<?php echo number_format($netBalance, 2); ?></h3>
                 <p class="card-text"><small>Mois Courant</small></p>
             </div>
         </div>
@@ -72,7 +72,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
         <div class="card text-bg-info h-100">
             <div class="card-body">
                 <h5 class="card-title">Valeur des Actifs</h5>
-                <h3 class="card-text">₱<?php echo number_format($totalAssetValue, 2); ?></h3>
+                <h3 class="card-text">€<?php echo number_format($totalAssetValue, 2); ?></h3>
                 <p class="card-text"><small><a href="?action=asset-management" class="text-white">Voir Détails</a></small></p>
             </div>
         </div>
@@ -101,7 +101,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
                                 <div class="d-flex w-100 justify-content-between">
                                     <small class="text-muted"><?php echo $transaction['type'] === 'income' ? 'Revenu' : 'Dépense'; ?></small>
                                     <span class="<?php echo $transaction['type'] === 'income' ? 'text-success' : 'text-danger'; ?>">
-                                        <?php echo $transaction['type'] === 'income' ? '+' : '-'; ?>₱<?php echo number_format($transaction['amount'], 2); ?>
+                                        <?php echo $transaction['type'] === 'income' ? '+' : '-'; ?>€<?php echo number_format($transaction['amount'], 2); ?>
                                     </span>
                                 </div>
                             </div>
@@ -137,7 +137,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
                                 <?php foreach ($expenseByCategory as $expense): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($expense['category']); ?></td>
-                                        <td class="text-end">₱<?php echo number_format($expense['total'], 2); ?></td>
+                                        <td class="text-end">€<?php echo number_format($expense['total'], 2); ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -177,7 +177,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
                                     <?php foreach (array_slice($assetsByCategory, 0, 5) as $category): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($category['category']); ?></td>
-                                        <td class="text-end">₱<?php echo number_format($category['total_value'], 2); ?></td>
+                                        <td class="text-end">€<?php echo number_format($category['total_value'], 2); ?></td>
                                         <td class="text-end">
                                             <?php 
                                             $percentage = $totalAssetValue > 0 ? ($category['total_value'] / $totalAssetValue) * 100 : 0;

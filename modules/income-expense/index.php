@@ -75,7 +75,7 @@ $netBalance = $totalIncome - $totalExpense;
         <div class="card border-primary">
             <div class="card-body text-center">
                 <h5 class="card-title text-primary">Revenu Total</h5>
-                <h3 class="card-text"><?php echo '₱' . number_format($totalIncome, 2); ?></h3>
+                <h3 class="card-text"><?php echo '€' . number_format($totalIncome, 2); ?></h3>
             </div>
         </div>
     </div>
@@ -83,7 +83,7 @@ $netBalance = $totalIncome - $totalExpense;
         <div class="card border-danger">
             <div class="card-body text-center">
                 <h5 class="card-title text-danger">Dépenses Totales</h5>
-                <h3 class="card-text"><?php echo '₱' . number_format($totalExpense, 2); ?></h3>
+                <h3 class="card-text"><?php echo '€' . number_format($totalExpense, 2); ?></h3>
             </div>
         </div>
     </div>
@@ -91,7 +91,7 @@ $netBalance = $totalIncome - $totalExpense;
         <div class="card <?php echo $netBalance >= 0 ? 'border-success' : 'border-warning'; ?>">
             <div class="card-body text-center">
                 <h5 class="card-title <?php echo $netBalance >= 0 ? 'text-success' : 'text-warning'; ?>">Solde Net</h5>
-                <h3 class="card-text"><?php echo '₱' . number_format($netBalance, 2); ?></h3>
+                <h3 class="card-text"><?php echo '€' . number_format($netBalance, 2); ?></h3>
             </div>
         </div>
     </div>
@@ -155,7 +155,7 @@ $netBalance = $totalIncome - $totalExpense;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="income_amount" class="form-label">Montant (₱)</label>
+                                <label for="income_amount" class="form-label">Montant (€)</label>
                                 <input type="number" class="form-control" id="income_amount" name="amount" step="0.01" min="0" required>
                             </div>
                             <div class="mb-3">
@@ -200,7 +200,7 @@ $netBalance = $totalIncome - $totalExpense;
                                                 <td><?php echo date('d M Y', strtotime($transaction['transaction_date'])); ?></td>
                                                 <td><?php echo $transaction['category_name']; ?></td>
                                                 <td><?php echo $transaction['description'] ?: 'N/A'; ?></td>
-                                                <td class="text-end">₱<?php echo number_format($transaction['amount'], 2); ?></td>
+                                                <td class="text-end">€<?php echo number_format($transaction['amount'], 2); ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
@@ -234,7 +234,7 @@ $netBalance = $totalIncome - $totalExpense;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="expense_amount" class="form-label">Montant (₱)</label>
+                                <label for="expense_amount" class="form-label">Montant (€)</label>
                                 <input type="number" class="form-control" id="expense_amount" name="amount" step="0.01" min="0" required>
                             </div>
                             <div class="mb-3">
@@ -279,7 +279,7 @@ $netBalance = $totalIncome - $totalExpense;
                                                 <td><?php echo date('d M Y', strtotime($transaction['transaction_date'])); ?></td>
                                                 <td><?php echo $transaction['category_name']; ?></td>
                                                 <td><?php echo $transaction['description'] ?: 'N/A'; ?></td>
-                                                <td class="text-end">₱<?php echo number_format($transaction['amount'], 2); ?></td>
+                                                <td class="text-end">€<?php echo number_format($transaction['amount'], 2); ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php endif; ?>

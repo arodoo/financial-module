@@ -52,7 +52,7 @@ foreach ($assets as $asset) {
         <div class="card border-primary">
             <div class="card-body text-center">
                 <h5 class="card-title text-primary">Valeur Totale des Actifs</h5>
-                <h3 class="card-text"><?php echo '₱' . number_format($totalValue, 2); ?></h3>
+                <h3 class="card-text"><?php echo '€' . number_format($totalValue, 2); ?></h3>
             </div>
         </div>
     </div>
@@ -60,7 +60,7 @@ foreach ($assets as $asset) {
         <div class="card border-info">
             <div class="card-body text-center">
                 <h5 class="card-title text-info">Valeur d'Achat Totale</h5>
-                <h3 class="card-text"><?php echo '₱' . number_format($totalPurchase, 2); ?></h3>
+                <h3 class="card-text"><?php echo '€' . number_format($totalPurchase, 2); ?></h3>
             </div>
         </div>
     </div>
@@ -70,7 +70,7 @@ foreach ($assets as $asset) {
                 <h5 class="card-title <?php echo $totalAppreciation >= 0 ? 'text-success' : 'text-danger'; ?>">
                     <?php echo $totalAppreciation >= 0 ? 'Appréciation' : 'Dépréciation'; ?> Totale
                 </h5>
-                <h3 class="card-text"><?php echo ($totalAppreciation >= 0 ? '+' : '') . '₱' . number_format($totalAppreciation, 2); ?></h3>
+                <h3 class="card-text"><?php echo ($totalAppreciation >= 0 ? '+' : '') . '€' . number_format($totalAppreciation, 2); ?></h3>
             </div>
         </div>
     </div>
@@ -100,7 +100,7 @@ foreach ($assets as $asset) {
                                 <tr>
                                     <td><?php echo htmlspecialchars($category['category']); ?></td>
                                     <td class="text-center"><?php echo $category['count']; ?></td>
-                                    <td class="text-end">₱<?php echo number_format($category['total_value'], 2); ?></td>
+                                    <td class="text-end">€<?php echo number_format($category['total_value'], 2); ?></td>
                                     <td class="text-end">
 <?php 
                                         $percentage = $totalValue > 0 ? ($category['total_value'] / $totalValue) * 100 : 0;
@@ -155,11 +155,11 @@ foreach ($assets as $asset) {
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="purchase_value" class="form-label">Valeur d'Achat (₱)</label>
+                            <label for="purchase_value" class="form-label">Valeur d'Achat (€)</label>
                             <input type="number" class="form-control" id="purchase_value" name="purchase_value" step="0.01" min="0" value="<?php echo $editAsset ? $editAsset['purchase_value'] : ''; ?>" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="current_value" class="form-label">Valeur Actuelle (₱)</label>
+                            <label for="current_value" class="form-label">Valeur Actuelle (€)</label>
                             <input type="number" class="form-control" id="current_value" name="current_value" step="0.01" min="0" value="<?php echo $editAsset ? $editAsset['current_value'] : ''; ?>" required>
                         </div>
                     </div>
@@ -211,14 +211,14 @@ foreach ($assets as $asset) {
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <p><strong>Catégorie:</strong> <?php echo htmlspecialchars($viewAsset['category_name']); ?></p>
-                            <p><strong>Valeur d'Achat:</strong> ₱<?php echo number_format($viewAsset['purchase_value'], 2); ?></p>
-                            <p><strong>Valeur Actuelle:</strong> ₱<?php echo number_format($viewAsset['current_value'], 2); ?></p>
+                            <p><strong>Valeur d'Achat:</strong> €<?php echo number_format($viewAsset['purchase_value'], 2); ?></p>
+                            <p><strong>Valeur Actuelle:</strong> €<?php echo number_format($viewAsset['current_value'], 2); ?></p>
                             <p><strong>Changement:</strong> 
                                 <span class="<?php echo ($viewAsset['current_value'] >= $viewAsset['purchase_value']) ? 'text-success' : 'text-danger'; ?>">
                                     <?php 
                                     $change = $viewAsset['current_value'] - $viewAsset['purchase_value'];
                                     $changePercentage = ($viewAsset['purchase_value'] > 0) ? ($change / $viewAsset['purchase_value']) * 100 : 0;
-                                    echo ($change >= 0 ? '+' : '') . '₱' . number_format($change, 2) . ' (' . number_format($changePercentage, 1) . '%)';
+                                    echo ($change >= 0 ? '+' : '') . '€' . number_format($change, 2) . ' (' . number_format($changePercentage, 1) . '%)';
                                     ?>
                                 </span>
                             </p>
@@ -255,7 +255,7 @@ foreach ($assets as $asset) {
                                     <?php foreach ($assetHistory as $record): ?>
                                     <tr>
                                         <td><?php echo date('d/m/Y', strtotime($record['valuation_date'])); ?></td>
-                                        <td class="text-end">₱<?php echo number_format($record['value'], 2); ?></td>
+                                        <td class="text-end">€<?php echo number_format($record['value'], 2); ?></td>
                                         <td><?php echo !empty($record['notes']) ? htmlspecialchars($record['notes']) : ''; ?></td>
                                     </tr>
                                     <?php endforeach; ?>
@@ -303,9 +303,9 @@ foreach ($assets as $asset) {
                                         <tr>
                                             <td><?php echo htmlspecialchars($asset['name']); ?></td>
                                             <td><?php echo htmlspecialchars($asset['category_name']); ?></td>
-                                            <td class="text-end">₱<?php echo number_format($asset['current_value'], 2); ?></td>
+                                            <td class="text-end">€<?php echo number_format($asset['current_value'], 2); ?></td>
                                             <td class="text-end <?php echo $appreciation >= 0 ? 'text-success' : 'text-danger'; ?>">
-                                                <?php echo ($appreciation >= 0 ? '+' : '') . '₱' . number_format($appreciation, 2); ?>
+                                                <?php echo ($appreciation >= 0 ? '+' : '') . '€' . number_format($appreciation, 2); ?>
                                                 <small>(<?php echo number_format($appreciationPercentage, 1); ?>%)</small>
                                             </td>
                                             <td class="text-center">
