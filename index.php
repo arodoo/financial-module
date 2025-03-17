@@ -3,8 +3,13 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Include necessary configurations
+// Include necessary configurations and models
 require_once 'config/config.php';
+require_once 'models/Membre.php';
+
+// Get current membre info
+$membreModel = new Membre();
+$currentMembre = $membreModel->getMembre($id_oo);
 
 // Global user ID is now available from config.php as $id_oo and CURRENT_USER_ID constant
 
@@ -55,7 +60,11 @@ if (!array_key_exists($action, $modules)) {
             <a class="navbar-brand" href="#">Financial Management System</a>
             <!-- Membre indicator -->
             <span class="navbar-text me-3 text-white">
-                Membre ID: <?php echo $id_oo; ?>
+                <?php if ($currentMembre): ?>
+                    User: <?php echo htmlspecialchars($currentMembre['prenom'] . ' ' . $currentMembre['nom']); ?>
+                <?php else: ?>
+                    Membre ID: <?php echo $id_oo; ?>
+                <?php endif; ?>
             </span>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

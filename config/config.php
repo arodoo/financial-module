@@ -11,9 +11,8 @@ define('DB_NAME', 'zenfamili');
 $id_oo = 1; 
 define('CURRENT_USER_ID', $id_oo);
 
-// Global membre ID - this would normally come from a login system
+// Global membre ID - this will be dynamically set by the web server in production
 $id_oo = 1; 
-define('CURRENT_MEMBRE_ID', $id_oo);
 
 // Other configuration parameters
 define('APP_NAME', 'Financial Visualization');

@@ -3,12 +3,9 @@ require_once __DIR__ . '/../config/database.php';
 
 class Expense {
     private $conn;
-    private $membreId;
 
     public function __construct() {
-        global $id_oo;
         $this->conn = getDbConnection();
-        $this->membreId = $id_oo;
     }
 
     public function getAllCategories() {
@@ -18,11 +15,13 @@ class Expense {
     }
 
     public function getExpenseTransactions($startDate = null, $endDate = null, $categoryId = null) {
+        global $id_oo;
+        
         $sql = "SELECT t.*, c.name as category_name 
                 FROM expense_transactions t 
                 JOIN expense_categories c ON t.category_id = c.id
                 WHERE t.membre_id = :membre_id";
-        $params = [':membre_id' => $this->membreId];
+        $params = [':membre_id' => $id_oo];
 
         if ($startDate) {
             $sql .= " AND t.transaction_date >= :start_date";
@@ -47,13 +46,15 @@ class Expense {
     }
 
     public function addExpense($categoryId, $amount, $description, $transactionDate) {
+        global $id_oo;
+        
         $stmt = $this->conn->prepare(
             "INSERT INTO expense_transactions (membre_id, category_id, amount, description, transaction_date) 
              VALUES (:membre_id, :category_id, :amount, :description, :transaction_date)"
         );
         
         return $stmt->execute([
-            ':membre_id' => $this->membreId,
+            ':membre_id' => $id_oo,
             ':category_id' => $categoryId,
             ':amount' => $amount,
             ':description' => $description,
@@ -62,8 +63,10 @@ class Expense {
     }
 
     public function getTotalExpense($startDate = null, $endDate = null) {
+        global $id_oo;
+        
         $sql = "SELECT SUM(amount) as total FROM expense_transactions WHERE membre_id = :membre_id";
-        $params = [':membre_id' => $this->membreId];
+        $params = [':membre_id' => $id_oo];
 
         if ($startDate) {
             $sql .= " AND transaction_date >= :start_date";

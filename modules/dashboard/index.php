@@ -1,8 +1,11 @@
 <?php
 require_once __DIR__ . '/../../models/Dashboard.php';
+require_once __DIR__ . '/../../models/Membre.php';
 
 // Initialize dashboard model
 $dashboardModel = new Dashboard();
+$membreModel = new Membre();
+$currentMembre = $membreModel->getMembre($id_oo);
 
 // Get current month date range
 $today = new DateTime();
@@ -24,7 +27,10 @@ $incomeByCategory = $dashboardModel->getCategoryTotals('income');
 
 <!-- Month Summary -->
 <div class="alert alert-info">
-    Financial summary for <?php echo date('F Y'); ?>
+    Financial summary for <?php echo date('F Y'); ?> 
+    <?php if ($currentMembre): ?>
+        - <?php echo htmlspecialchars($currentMembre['prenom'] . ' ' . $currentMembre['nom']); ?>
+    <?php endif; ?>
 </div>
 
 <!-- Summary Cards -->
