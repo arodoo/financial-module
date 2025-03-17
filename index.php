@@ -106,7 +106,8 @@ if (!array_key_exists($action, $modules)) {
                         include 'modules/asset-management/index.php';
                         break;
                     case 'loan-simulator':
-                        echo '<div class="alert alert-info">Simulez différents scénarios de prêt pour prendre des décisions éclairées.</div>';
+                        // Include the loan simulator module
+                        include 'modules/loan-simulator/index.php';
                         break;
                     case 'school-fee':
                         echo '<div class="alert alert-info">Planifiez et suivez les frais scolaires et les dépenses éducatives.</div>';

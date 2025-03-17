@@ -1,4 +1,4 @@
-y<?php
+<?php
 require_once __DIR__ . '/../../models/Income.php';
 require_once __DIR__ . '/../../models/Expense.php';
 
