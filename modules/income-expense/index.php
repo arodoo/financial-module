@@ -60,9 +60,9 @@ $netBalance = $totalIncome - $totalExpense;
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <?php 
         if ($_GET['success'] === 'income_added') {
-            echo "Income successfully added!";
+            echo "Revenu ajouté avec succès!";
         } elseif ($_GET['success'] === 'expense_added') {
-            echo "Expense successfully added!";
+            echo "Dépense ajoutée avec succès!";
         }
         ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -74,7 +74,7 @@ $netBalance = $totalIncome - $totalExpense;
     <div class="col-md-4">
         <div class="card border-primary">
             <div class="card-body text-center">
-                <h5 class="card-title text-primary">Total Income</h5>
+                <h5 class="card-title text-primary">Revenu Total</h5>
                 <h3 class="card-text"><?php echo '₱' . number_format($totalIncome, 2); ?></h3>
             </div>
         </div>
@@ -82,7 +82,7 @@ $netBalance = $totalIncome - $totalExpense;
     <div class="col-md-4">
         <div class="card border-danger">
             <div class="card-body text-center">
-                <h5 class="card-title text-danger">Total Expenses</h5>
+                <h5 class="card-title text-danger">Dépenses Totales</h5>
                 <h3 class="card-text"><?php echo '₱' . number_format($totalExpense, 2); ?></h3>
             </div>
         </div>
@@ -90,7 +90,7 @@ $netBalance = $totalIncome - $totalExpense;
     <div class="col-md-4">
         <div class="card <?php echo $netBalance >= 0 ? 'border-success' : 'border-warning'; ?>">
             <div class="card-body text-center">
-                <h5 class="card-title <?php echo $netBalance >= 0 ? 'text-success' : 'text-warning'; ?>">Net Balance</h5>
+                <h5 class="card-title <?php echo $netBalance >= 0 ? 'text-success' : 'text-warning'; ?>">Solde Net</h5>
                 <h3 class="card-text"><?php echo '₱' . number_format($netBalance, 2); ?></h3>
             </div>
         </div>
@@ -105,15 +105,15 @@ $netBalance = $totalIncome - $totalExpense;
             <input type="hidden" name="filter" value="1">
             
             <div class="col-md-4">
-                <label for="start_date" class="form-label">Start Date</label>
+                <label for="start_date" class="form-label">Date de Début</label>
                 <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo $startDate; ?>">
             </div>
             <div class="col-md-4">
-                <label for="end_date" class="form-label">End Date</label>
+                <label for="end_date" class="form-label">Date de Fin</label>
                 <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo $endDate; ?>">
             </div>
             <div class="col-md-4 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">Apply Filter</button>
+                <button type="submit" class="btn btn-primary">Appliquer Filtre</button>
             </div>
         </form>
     </div>
@@ -123,12 +123,12 @@ $netBalance = $totalIncome - $totalExpense;
 <ul class="nav nav-tabs mb-3" id="financeTab" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="income-tab" data-bs-toggle="tab" data-bs-target="#income" type="button">
-            Income Management
+            Gestion des Revenus
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="expense-tab" data-bs-toggle="tab" data-bs-target="#expense" type="button">
-            Expense Management
+            Gestion des Dépenses
         </button>
     </li>
 </ul>
@@ -141,21 +141,21 @@ $netBalance = $totalIncome - $totalExpense;
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Add New Income</h5>
+                        <h5 class="mb-0">Ajouter Nouveau Revenu</h5>
                     </div>
                     <div class="card-body">
                         <form method="POST">
                             <div class="mb-3">
-                                <label for="income_category" class="form-label">Category</label>
+                                <label for="income_category" class="form-label">Catégorie</label>
                                 <select class="form-select" id="income_category" name="category_id" required>
-                                    <option value="">Select Category</option>
+                                    <option value="">Sélectionner Catégorie</option>
                                     <?php foreach ($incomeCategories as $category): ?>
                                         <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="income_amount" class="form-label">Amount (₱)</label>
+                                <label for="income_amount" class="form-label">Montant (₱)</label>
                                 <input type="number" class="form-control" id="income_amount" name="amount" step="0.01" min="0" required>
                             </div>
                             <div class="mb-3">
@@ -166,7 +166,7 @@ $netBalance = $totalIncome - $totalExpense;
                                 <label for="income_description" class="form-label">Description</label>
                                 <textarea class="form-control" id="income_description" name="description" rows="3"></textarea>
                             </div>
-                            <button type="submit" name="add_income" class="btn btn-primary w-100">Add Income</button>
+                            <button type="submit" name="add_income" class="btn btn-primary w-100">Ajouter Revenu</button>
                         </form>
                     </div>
                 </div>
@@ -176,7 +176,7 @@ $netBalance = $totalIncome - $totalExpense;
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-light">
-                        <h5 class="mb-0">Income Transactions</h5>
+                        <h5 class="mb-0">Transactions de Revenus</h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -184,20 +184,20 @@ $netBalance = $totalIncome - $totalExpense;
                                 <thead>
                                     <tr>
                                         <th>Date</th>
-                                        <th>Category</th>
+                                        <th>Catégorie</th>
                                         <th>Description</th>
-                                        <th>Amount</th>
+                                        <th>Montant</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (empty($incomeTransactions)): ?>
                                         <tr>
-                                            <td colspan="4" class="text-center">No income transactions found for this period.</td>
+                                            <td colspan="4" class="text-center">Aucune transaction de revenu trouvée pour cette période.</td>
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach ($incomeTransactions as $transaction): ?>
                                             <tr>
-                                                <td><?php echo date('M d, Y', strtotime($transaction['transaction_date'])); ?></td>
+                                                <td><?php echo date('d M Y', strtotime($transaction['transaction_date'])); ?></td>
                                                 <td><?php echo $transaction['category_name']; ?></td>
                                                 <td><?php echo $transaction['description'] ?: 'N/A'; ?></td>
                                                 <td class="text-end">₱<?php echo number_format($transaction['amount'], 2); ?></td>
@@ -220,21 +220,21 @@ $netBalance = $totalIncome - $totalExpense;
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header bg-danger text-white">
-                        <h5 class="mb-0">Add New Expense</h5>
+                        <h5 class="mb-0">Ajouter Nouvelle Dépense</h5>
                     </div>
                     <div class="card-body">
                         <form method="POST">
                             <div class="mb-3">
-                                <label for="expense_category" class="form-label">Category</label>
+                                <label for="expense_category" class="form-label">Catégorie</label>
                                 <select class="form-select" id="expense_category" name="category_id" required>
-                                    <option value="">Select Category</option>
+                                    <option value="">Sélectionner Catégorie</option>
                                     <?php foreach ($expenseCategories as $category): ?>
                                         <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="expense_amount" class="form-label">Amount (₱)</label>
+                                <label for="expense_amount" class="form-label">Montant (₱)</label>
                                 <input type="number" class="form-control" id="expense_amount" name="amount" step="0.01" min="0" required>
                             </div>
                             <div class="mb-3">
@@ -245,7 +245,7 @@ $netBalance = $totalIncome - $totalExpense;
                                 <label for="expense_description" class="form-label">Description</label>
                                 <textarea class="form-control" id="expense_description" name="description" rows="3"></textarea>
                             </div>
-                            <button type="submit" name="add_expense" class="btn btn-danger w-100">Add Expense</button>
+                            <button type="submit" name="add_expense" class="btn btn-danger w-100">Ajouter Dépense</button>
                         </form>
                     </div>
                 </div>
@@ -255,7 +255,7 @@ $netBalance = $totalIncome - $totalExpense;
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-light">
-                        <h5 class="mb-0">Expense Transactions</h5>
+                        <h5 class="mb-0">Transactions de Dépenses</h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -263,20 +263,20 @@ $netBalance = $totalIncome - $totalExpense;
                                 <thead>
                                     <tr>
                                         <th>Date</th>
-                                        <th>Category</th>
+                                        <th>Catégorie</th>
                                         <th>Description</th>
-                                        <th>Amount</th>
+                                        <th>Montant</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (empty($expenseTransactions)): ?>
                                         <tr>
-                                            <td colspan="4" class="text-center">No expense transactions found for this period.</td>
+                                            <td colspan="4" class="text-center">Aucune transaction de dépense trouvée pour cette période.</td>
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach ($expenseTransactions as $transaction): ?>
                                             <tr>
-                                                <td><?php echo date('M d, Y', strtotime($transaction['transaction_date'])); ?></td>
+                                                <td><?php echo date('d M Y', strtotime($transaction['transaction_date'])); ?></td>
                                                 <td><?php echo $transaction['category_name']; ?></td>
                                                 <td><?php echo $transaction['description'] ?: 'N/A'; ?></td>
                                                 <td class="text-end">₱<?php echo number_format($transaction['amount'], 2); ?></td>

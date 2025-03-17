@@ -15,11 +15,11 @@ $currentMembre = $membreModel->getMembre($id_oo);
 
 // Define available modules and their titles
 $modules = [
-    'dashboard' => 'Dashboard',
-    'income-expense' => 'Income & Expenses',
-    'asset-management' => 'Asset Management',
-    'loan-simulator' => 'Loan Simulator',
-    'school-fee' => 'School Fees'
+    'dashboard' => 'Tableau de bord',
+    'income-expense' => 'Revenus & Dépenses',
+    'asset-management' => 'Gestion des actifs',
+    'loan-simulator' => 'Simulateur de prêt',
+    'school-fee' => 'Frais scolaires'
 ];
 
 // Route requests based on the action parameter
@@ -33,11 +33,11 @@ if (!array_key_exists($action, $modules)) {
 // HTML header
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Module - <?php echo $modules[$action]; ?></title>
+    <title>Module Financier - <?php echo $modules[$action]; ?></title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom styles -->
@@ -57,13 +57,13 @@ if (!array_key_exists($action, $modules)) {
     <!-- Header with Bootstrap Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
         <div class="container">
-            <a class="navbar-brand" href="#">Financial Management System</a>
+            <a class="navbar-brand" href="#">Système de Gestion Financière</a>
             <!-- Membre indicator -->
             <span class="navbar-text me-3 text-white">
                 <?php if ($currentMembre): ?>
-                    User: <?php echo htmlspecialchars($currentMembre['prenom'] . ' ' . $currentMembre['nom']); ?>
+                    Utilisateur: <?php echo htmlspecialchars($currentMembre['prenom'] . ' ' . $currentMembre['nom']); ?>
                 <?php else: ?>
-                    Membre ID: <?php echo $id_oo; ?>
+                    ID Membre: <?php echo $id_oo; ?>
                 <?php endif; ?>
             </span>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -102,13 +102,13 @@ if (!array_key_exists($action, $modules)) {
                         include 'modules/income-expense/index.php';
                         break;
                     case 'asset-management':
-                        echo '<div class="alert alert-info">Manage your assets and view their performance.</div>';
+                        echo '<div class="alert alert-info">Gérez vos actifs et consultez leur performance.</div>';
                         break;
                     case 'loan-simulator':
-                        echo '<div class="alert alert-info">Simulate different loan scenarios to make informed decisions.</div>';
+                        echo '<div class="alert alert-info">Simulez différents scénarios de prêt pour prendre des décisions éclairées.</div>';
                         break;
                     case 'school-fee':
-                        echo '<div class="alert alert-info">Plan and track school fees and educational expenses.</div>';
+                        echo '<div class="alert alert-info">Planifiez et suivez les frais scolaires et les dépenses éducatives.</div>';
                         break;
                 }
                 ?>
@@ -119,7 +119,7 @@ if (!array_key_exists($action, $modules)) {
     <!-- Footer -->
     <footer class="bg-light text-center text-muted py-3 mt-4">
         <div class="container">
-            &copy; <?php echo date('Y'); ?> Financial Management System
+            &copy; <?php echo date('Y'); ?> Système de Gestion Financière
         </div>
     </footer>
     
