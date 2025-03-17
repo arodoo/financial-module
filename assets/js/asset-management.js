@@ -40,4 +40,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listener to recalculate total assets on table update
     assetTable.addEventListener('DOMSubtreeModified', calculateTotalAssets);
+
+    // Initialize any interactive elements or validation
+    const purchaseValueField = document.getElementById('purchase_value');
+    const currentValueField = document.getElementById('current_value');
+    
+    // If purchase value changes and current value is empty, set them equal
+    if (purchaseValueField && currentValueField) {
+        purchaseValueField.addEventListener('change', function() {
+            if (currentValueField.value === '') {
+                currentValueField.value = purchaseValueField.value;
+            }
+        });
+    }
+    
+    // Add confirmation for asset deletion
+    const deleteButtons = document.querySelectorAll('[data-action="delete-asset"]');
+    deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function(event) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cet actif?')) {
+                event.preventDefault();
+            }
+        });
+    });
 });
+
+// Function to calculate asset appreciation/depreciation percentage
+function calculateAppreciation(purchaseValue, currentValue) {
+    const purchase = parseFloat(purchaseValue);
+    const current = parseFloat(currentValue);
+    
+    if (isNaN(purchase) || purchase === 0) {
+        return 0;
+    }
+    
+    return ((current - purchase) / purchase) * 100;
+}
+
+// Function to format currency
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP',
+        minimumFractionDigits: 2
+    }).format(amount);
+}

@@ -102,7 +102,8 @@ if (!array_key_exists($action, $modules)) {
                         include 'modules/income-expense/index.php';
                         break;
                     case 'asset-management':
-                        echo '<div class="alert alert-info">Gérez vos actifs et consultez leur performance.</div>';
+                        // Include the asset-management module
+                        include 'modules/asset-management/index.php';
                         break;
                     case 'loan-simulator':
                         echo '<div class="alert alert-info">Simulez différents scénarios de prêt pour prendre des décisions éclairées.</div>';

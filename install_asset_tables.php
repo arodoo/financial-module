@@ -1,7 +1,7 @@
 <?php
 require_once 'config/database.php';
 
-echo "<h1>Creating Membres Table</h1>";
+echo "<h1>Creating Asset Management Tables</h1>";
 
 try {
     $conn = getDbConnection();
@@ -9,7 +9,7 @@ try {
     echo "<p>Connected to database successfully.</p>";
     
     // Read the SQL file
-    $sqlFile = file_get_contents('sql/create_membres.sql');
+    $sqlFile = file_get_contents('sql/create_assets.sql');
     
     // Split into separate statements
     $statements = array_filter(
@@ -28,7 +28,7 @@ try {
         }
     }
     
-    echo "<h2>Membres table created successfully!</h2>";
+    echo "<h2>Asset tables created successfully!</h2>";
     echo "<p>Executed $successCount statements.</p>";
     echo "<p><a href='index.php' class='btn btn-primary'>Return to application</a></p>";
     
