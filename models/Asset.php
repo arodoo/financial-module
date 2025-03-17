@@ -1,8 +1,4 @@
 <?php
-namespace Financial\Modules\Visualization\Models;
-
-use PDO;
-
 require_once __DIR__ . '/../config/database.php';
 
 class Asset {

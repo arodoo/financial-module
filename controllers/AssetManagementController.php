@@ -1,9 +1,4 @@
 <?php
-namespace Financial\Modules\Visualization\Controllers;
-
-use Financial\Modules\Visualization\Models\Asset;
-use PDO;
-
 require_once __DIR__ . '/../models/Asset.php';
 require_once __DIR__ . '/../models/Membre.php';
 
@@ -18,8 +13,7 @@ class AssetManagementController
     public function __construct()
     {
         $this->assetModel = new Asset();
-        // Fix: Use the global namespace for the Membre class since it doesn't have a namespace
-        $this->membreModel = new \Membre();
+        $this->membreModel = new Membre();
     }
 
     /**

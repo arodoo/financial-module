@@ -1,6 +1,4 @@
 <?php
-use Financial\Modules\Visualization\Controllers\AssetManagementController;
-
 // Adjust paths to match actual file structure
 require_once __DIR__ . '/../../controllers/AssetManagementController.php';
 require_once __DIR__ . '/../../models/Asset.php';
