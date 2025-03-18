@@ -2,30 +2,21 @@
 // Include necessary controllers and models
 require_once __DIR__ . '/../../controllers/SchoolFeeController.php';
 require_once __DIR__ . '/../../models/SchoolFee.php';
-require_once __DIR__ . '/../../models/Asset.php';
 require_once __DIR__ . '/../../services/CalculationService.php';
 
 // Initialize controller and services
 $schoolFeeController = new SchoolFeeController();
-$calculationService = new CalculationService();
 
-// Process form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['calculate_fees'])) {
-        $schoolFeeController->calculateFees($_POST);
-    } elseif (isset($_POST['save_child'])) {
-        $schoolFeeController->saveChild($_POST);
-        header('Location: ?action=school-fee-simulator&success=child_saved');
-        exit;
-    } elseif (isset($_POST['delete_child'])) {
-        $schoolFeeController->deleteChild($_POST['child_id']);
-        header('Location: ?action=school-fee-simulator&success=child_deleted');
-        exit;
-    }
-}
+// Process form submissions or actions
+$schoolFeeController->processRequest();
 
-// Get saved children profiles
-$children = $schoolFeeController->getSavedChildren();
+// Get data for the view
+$viewData = $schoolFeeController->getViewData();
+$children = $viewData['children'] ?? [];
+$selectedChild = $viewData['selectedChild'] ?? null;
+$editChild = $viewData['editChild'] ?? null;
+$viewChild = $viewData['viewChild'] ?? null;
+$results = $viewData['calculationResults'] ?? null;
 
 // Check for success messages
 $successMessage = null;
@@ -33,6 +24,9 @@ if (isset($_GET['success'])) {
     switch ($_GET['success']) {
         case 'child_saved':
             $successMessage = 'Profil enfant enregistré avec succès!';
+            break;
+        case 'child_updated':
+            $successMessage = 'Profil enfant mis à jour avec succès!';
             break;
         case 'child_deleted':
             $successMessage = 'Profil enfant supprimé avec succès!';
@@ -49,8 +43,12 @@ $educationLevels = [
     'superieur' => ['name' => 'Études supérieures', 'ages' => '18+', 'duration' => 5]
 ];
 
-// Get calculation results if available
-$results = $schoolFeeController->getCalculationResults();
+// Pre-fill form with selected child data if available
+if ($selectedChild && !$editChild && !$results) {
+    // Calculate fees based on the selected child
+    $schoolFeeController->calculateFees($selectedChild);
+    $results = $schoolFeeController->getCalculationResults();
+}
 ?>
 
 <!-- Success Message -->
@@ -65,29 +63,33 @@ $results = $schoolFeeController->getCalculationResults();
     <!-- School Fee Calculator Form -->
     <div class="col-md-5">
         <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Simulateur de Frais de Scolarité</h5>
+            <div class="card-header bg-<?php echo $editChild ? 'warning' : 'primary'; ?> text-white">
+                <h5 class="mb-0"><?php echo $editChild ? 'Modifier le Profil Enfant' : 'Simulateur de Frais de Scolarité'; ?></h5>
             </div>
             <div class="card-body">
                 <form method="POST" id="school-fee-calculator-form">
+                    <?php if ($editChild): ?>
+                        <input type="hidden" name="child_id" value="<?php echo $editChild['id']; ?>">
+                    <?php endif; ?>
+                    
                     <h6 class="mb-3">Informations sur l'Enfant</h6>
                     <div class="mb-3">
                         <label for="child_name" class="form-label">Prénom de l'enfant</label>
                         <input type="text" class="form-control" id="child_name" name="child_name" 
-                            value="<?php echo $_POST['child_name'] ?? ''; ?>" required>
+                            value="<?php echo $editChild ? htmlspecialchars($editChild['name']) : ($selectedChild ? htmlspecialchars($selectedChild['name']) : ''); ?>" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="child_birthdate" class="form-label">Date de naissance</label>
                         <input type="date" class="form-control" id="child_birthdate" name="child_birthdate" 
-                            value="<?php echo $_POST['child_birthdate'] ?? ''; ?>" required>
+                            value="<?php echo $editChild ? $editChild['birthdate'] : ($selectedChild ? $selectedChild['birthdate'] : ''); ?>" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="current_level" class="form-label">Niveau scolaire actuel</label>
                         <select class="form-select" id="current_level" name="current_level" required>
                             <?php foreach ($educationLevels as $key => $level): ?>
-                                <option value="<?php echo $key; ?>" <?php echo (isset($_POST['current_level']) && $_POST['current_level'] == $key) ? 'selected' : ''; ?>>
+                                <option value="<?php echo $key; ?>" <?php echo (($editChild && $editChild['current_level'] == $key) || ($selectedChild && $selectedChild['current_level'] == $key)) ? 'selected' : ''; ?>>
                                     <?php echo $level['name'] . ' (' . $level['ages'] . ' ans)'; ?>
                                 </option>
                             <?php endforeach; ?>
@@ -98,40 +100,49 @@ $results = $schoolFeeController->getCalculationResults();
                     <div class="mb-3">
                         <label for="school_name" class="form-label">Nom de l'école</label>
                         <input type="text" class="form-control" id="school_name" name="school_name" 
-                            value="<?php echo $_POST['school_name'] ?? ''; ?>">
+                            value="<?php echo $editChild ? htmlspecialchars($editChild['school_name']) : ($selectedChild ? htmlspecialchars($selectedChild['school_name']) : ''); ?>">
                     </div>
                     
                     <div class="mb-3">
                         <label for="annual_tuition" class="form-label">Frais de scolarité annuels (€)</label>
                         <input type="text" class="form-control" id="annual_tuition" name="annual_tuition" 
-                            pattern="[0-9 ]*" value="<?php echo isset($_POST['annual_tuition']) ? number_format($_POST['annual_tuition'], 0, ',', ' ') : ''; ?>" required>
+                            pattern="[0-9 ]*" 
+                            value="<?php echo $editChild ? number_format($editChild['annual_tuition'], 0, ',', ' ') : ($selectedChild ? number_format($selectedChild['annual_tuition'], 0, ',', ' ') : ''); ?>" required>
                     </div>
                     
                     <div class="mb-3">
                         <label for="additional_expenses" class="form-label">Dépenses supplémentaires annuelles (€)</label>
                         <input type="text" class="form-control" id="additional_expenses" name="additional_expenses" 
-                            value="<?php echo isset($_POST['additional_expenses']) ? number_format($_POST['additional_expenses'], 0, ',', ' ') : ''; ?>">
+                            value="<?php echo $editChild ? number_format($editChild['additional_expenses'], 0, ',', ' ') : ($selectedChild ? number_format($selectedChild['additional_expenses'], 0, ',', ' ') : ''); ?>">
                         <small class="form-text text-muted">Uniformes, livres, activités extrascolaires, etc.</small>
                     </div>
                     
                     <div class="mb-3">
                         <label for="inflation_rate" class="form-label">Taux d'inflation estimé (%)</label>
                         <input type="number" class="form-control" id="inflation_rate" name="inflation_rate" 
-                            min="0" step="0.1" value="<?php echo $_POST['inflation_rate'] ?? 2; ?>" required>
+                            min="0" step="0.1" 
+                            value="<?php echo $editChild ? $editChild['inflation_rate'] : ($selectedChild ? $selectedChild['inflation_rate'] : 2); ?>" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="expected_graduation_level" class="form-label">Niveau d'études visé</label>
                         <select class="form-select" id="expected_graduation_level" name="expected_graduation_level" required>
                             <?php foreach ($educationLevels as $key => $level): ?>
-                                <option value="<?php echo $key; ?>" <?php echo (isset($_POST['expected_graduation_level']) && $_POST['expected_graduation_level'] == $key) ? 'selected' : ''; ?>>
+                                <option value="<?php echo $key; ?>" <?php echo (($editChild && $editChild['expected_graduation_level'] == $key) || ($selectedChild && $selectedChild['expected_graduation_level'] == $key)) ? 'selected' : ''; ?>>
                                     <?php echo $level['name']; ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     
-                    <button type="submit" name="calculate_fees" class="btn btn-primary w-100">Calculer</button>
+                    <?php if ($editChild): ?>
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" name="update_child" class="btn btn-warning">Mettre à jour</button>
+                            <a href="?action=school-fee" class="btn btn-secondary">Annuler</a>
+                        </div>
+                    <?php else: ?>
+                        <button type="submit" name="calculate_fees" class="btn btn-primary w-100">Calculer</button>
+                    <?php endif; ?>
                 </form>
             </div>
         </div>
@@ -145,16 +156,22 @@ $results = $schoolFeeController->getCalculationResults();
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
                     <?php foreach ($children as $child): ?>
-                    <a href="?action=school-fee-simulator&child_id=<?php echo $child['id']; ?>" class="list-group-item list-group-item-action">
+                    <div class="list-group-item">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1"><?php echo htmlspecialchars($child['name']); ?></h6>
                             <small><?php echo date('d/m/Y', strtotime($child['birthdate'])); ?></small>
                         </div>
                         <p class="mb-1">
                             École: <?php echo htmlspecialchars($child['school_name']); ?> | 
-                            Niveau: <?php echo htmlspecialchars($educationLevels[$child['current_level']]['name']); ?>
+                            Niveau: <?php echo $educationLevels[$child['current_level']]['name']; ?>
                         </p>
-                    </a>
+                        <div class="d-flex mt-2">
+                            <a href="?action=school-fee&view_child=<?php echo $child['id']; ?>" class="btn btn-sm btn-info me-1">Voir</a>
+                            <a href="?action=school-fee&edit_child=<?php echo $child['id']; ?>" class="btn btn-sm btn-warning me-1">Modifier</a>
+                            <a href="?action=school-fee&delete_child=<?php echo $child['id']; ?>" class="btn btn-sm btn-danger" 
+                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce profil?')">Supprimer</a>
+                        </div>
+                    </div>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -164,80 +181,17 @@ $results = $schoolFeeController->getCalculationResults();
     
     <!-- Calculation Results -->
     <div class="col-md-7">
-        <?php if ($results): ?>
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">Projection des Frais de Scolarité</h5>
-            </div>
-            <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="border rounded p-3 text-center">
-                            <h6>Coût Annuel Moyen</h6>
-                            <h3 class="text-primary"><?php echo number_format($results['averageAnnualCost'], 2); ?>€</h3>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border rounded p-3 text-center">
-                            <h6>Années Restantes</h6>
-                            <h3 class="text-info"><?php echo number_format($results['yearsRemaining'], 0); ?> ans</h3>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="border rounded p-3 text-center">
-                            <h6>Coût Total Estimé</h6>
-                            <h3><?php echo number_format($results['totalCost'], 2); ?>€</h3>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Save Child Profile Form -->
-                <form method="POST" class="mb-3 border-bottom pb-3">
-                    <input type="hidden" name="child_name" value="<?php echo $_POST['child_name']; ?>">
-                    <input type="hidden" name="child_birthdate" value="<?php echo $_POST['child_birthdate']; ?>">
-                    <input type="hidden" name="current_level" value="<?php echo $_POST['current_level']; ?>">
-                    <input type="hidden" name="school_name" value="<?php echo $_POST['school_name']; ?>">
-                    <input type="hidden" name="annual_tuition" value="<?php echo $_POST['annual_tuition']; ?>">
-                    <input type="hidden" name="additional_expenses" value="<?php echo $_POST['additional_expenses'] ?? 0; ?>">
-                    <input type="hidden" name="inflation_rate" value="<?php echo $_POST['inflation_rate']; ?>">
-                    <input type="hidden" name="expected_graduation_level" value="<?php echo $_POST['expected_graduation_level']; ?>">
-                    
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="submit" name="save_child" class="btn btn-success">Enregistrer ce Profil</button>
-                        <a href="?action=school-fee-simulator" class="btn btn-secondary">Annuler</a>
-                    </div>
-                </form>
-                
-                <!-- Yearly Cost Projection -->
-                <h5 class="mb-3">Projection Annuelle des Coûts</h5>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th>Année</th>
-                                <th>Âge</th>
-                                <th>Niveau</th>
-                                <th class="text-end">Frais de Scolarité</th>
-                                <th class="text-end">Dépenses Suppl.</th>
-                                <th class="text-end">Total Annuel</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($results['yearlyProjections'] as $projection): ?>
-                            <tr>
-                                <td><?php echo $projection['year']; ?></td>
-                                <td><?php echo $projection['age']; ?> ans</td>
-                                <td><?php echo $educationLevels[$projection['level']]['name']; ?></td>
-                                <td class="text-end"><?php echo number_format($projection['tuition'], 2); ?>€</td>
-                                <td class="text-end"><?php echo number_format($projection['additional'], 2); ?>€</td>
-                                <td class="text-end"><?php echo number_format($projection['total'], 2); ?>€</td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <?php if ($viewChild): ?>
+            <?php 
+            // Force calculation for this child profile
+            $schoolFeeController->calculateFees($viewChild);
+            $childResults = $schoolFeeController->getCalculationResults();
+            include __DIR__ . '/view-child.php'; 
+            ?>
+        <?php elseif ($results): ?>
+            <?php include __DIR__ . '/calculation-results.php'; ?>
+        <?php elseif (!empty($children)): ?>
+            <?php include __DIR__ . '/list-children.php'; ?>
         <?php else: ?>
         <div class="card">
             <div class="card-body">

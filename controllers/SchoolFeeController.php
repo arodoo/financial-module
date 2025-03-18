@@ -16,7 +16,97 @@ class SchoolFeeController {
         $this->calculationResults = null;
     }
 
+    /**
+     * Process actions based on request
+     */
+    public function processRequest() {
+        global $id_oo; // Used for user identification if needed
+        
+        // Check for form submissions
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Calculate fees
+            if (isset($_POST['calculate_fees'])) {
+                $this->calculateFees($_POST);
+                // No redirect, just stay on the page with results
+            }
+            
+            // Add new child
+            if (isset($_POST['save_child'])) {
+                $this->saveChild($_POST);
+                header('Location: ?action=school-fee&success=child_saved');
+                exit;
+            }
+            
+            // Update child
+            if (isset($_POST['update_child'])) {
+                $childId = intval($_POST['child_id']);
+                $this->updateChild($childId, $_POST);
+                header('Location: ?action=school-fee&success=child_updated');
+                exit;
+            }
+        }
+        
+        // Handle child deletion via GET
+        if (isset($_GET['delete_child'])) {
+            $childId = intval($_GET['delete_child']);
+            $this->deleteChild($childId);
+            header('Location: ?action=school-fee&success=child_deleted');
+            exit;
+        }
+    }
+    
+    /**
+     * Get data needed for the school fee simulator module
+     */
+    public function getViewData() {
+        $viewData = [];
+        
+        // Get children profiles
+        $viewData['children'] = $this->getSavedChildren();
+        
+        // Check if we need to load an existing child
+        if (isset($_GET['child_id'])) {
+            $childId = intval($_GET['child_id']);
+            $viewData['selectedChild'] = $this->schoolFeeModel->getChildProfile($childId);
+        }
+        
+        // Check if we need to edit a child
+        if (isset($_GET['edit_child'])) {
+            $childId = intval($_GET['edit_child']);
+            $viewData['editChild'] = $this->schoolFeeModel->getChildProfile($childId);
+        }
+        
+        // Check if we need to view child details
+        if (isset($_GET['view_child'])) {
+            $childId = intval($_GET['view_child']);
+            $viewData['viewChild'] = $this->schoolFeeModel->getChildProfile($childId);
+            
+            // Pre-calculate the projections for this child
+            $childData = $viewData['viewChild'];
+            if ($childData) {
+                $this->calculateFees($childData);
+                $viewData['calculationResults'] = $this->calculationResults;
+            }
+        }
+        
+        // Add calculation results if available
+        if (!isset($viewData['calculationResults']) && $this->calculationResults) {
+            $viewData['calculationResults'] = $this->calculationResults;
+        }
+        
+        return $viewData;
+    }
+
     public function index() {
+        // Process any form submissions or actions
+        $this->processRequest();
+        
+        // Get data for the view
+        $viewData = $this->getViewData();
+        
+        // Extract variables for use in the view
+        extract($viewData);
+        
         // Display school fee view
         include_once __DIR__ . '/../modules/school-fee-simulator/index.php';
     }
@@ -35,18 +125,25 @@ class SchoolFeeController {
             include_once '../views/school-fee/projections.php';
         } else {
             // Redirect to the index if not a POST request
-            header('Location: index.php');
+            header('Location: ?action=school-fee');
         }
     }
 
+    /**
+     * Calculate fees based on provided data
+     */
     public function calculateFees($data) {
         // Validate inputs
         if (!$this->validateFeeInputs($data)) {
             return false;
         }
         
+        // Support both child_birthdate and birthdate fields (for form data vs DB record)
+        $birthdateField = isset($data['child_birthdate']) ? 'child_birthdate' : 'birthdate';
+        $nameField = isset($data['child_name']) ? 'child_name' : 'name';
+        
         // Get current age from birthdate
-        $birthdate = new DateTime($data['child_birthdate']);
+        $birthdate = new DateTime($data[$birthdateField]);
         $today = new DateTime();
         $age = $birthdate->diff($today)->y;
         
@@ -68,9 +165,19 @@ class SchoolFeeController {
         $currentLevelFound = false;
         $yearlyProjections = [];
         
-        $annualTuition = str_replace(' ', '', $data['annual_tuition']);
-        $additionalExpenses = str_replace(' ', '', $data['additional_expenses'] ?? 0);
-        $inflationRate = $data['inflation_rate'] / 100;
+        // Make sure numeric values are properly formatted
+        $annualTuition = is_numeric($data['annual_tuition']) ? 
+            $data['annual_tuition'] : 
+            str_replace([' ', ','], ['', '.'], $data['annual_tuition']);
+            
+        $additionalExpenses = isset($data['additional_expenses']) ?
+            (is_numeric($data['additional_expenses']) ? 
+                $data['additional_expenses'] : 
+                str_replace([' ', ','], ['', '.'], $data['additional_expenses'])) : 0;
+                
+        $inflationRate = is_numeric($data['inflation_rate']) ? 
+            $data['inflation_rate'] / 100 : 
+            floatval($data['inflation_rate']) / 100;
         
         // Total cost calculation
         $totalCost = 0;
@@ -159,6 +266,25 @@ class SchoolFeeController {
         return $this->schoolFeeModel->saveChildProfile($childData);
     }
     
+    /**
+     * Update an existing child profile
+     */
+    public function updateChild($childId, $data) {
+        // Clean and prepare data
+        $childData = [
+            'name' => $data['child_name'],
+            'birthdate' => $data['child_birthdate'],
+            'current_level' => $data['current_level'],
+            'school_name' => $data['school_name'],
+            'annual_tuition' => str_replace(' ', '', $data['annual_tuition']),
+            'additional_expenses' => str_replace(' ', '', $data['additional_expenses'] ?? 0),
+            'inflation_rate' => $data['inflation_rate'],
+            'expected_graduation_level' => $data['expected_graduation_level']
+        ];
+        
+        return $this->schoolFeeModel->updateChildProfile($childId, $childData);
+    }
+    
     public function deleteChild($childId) {
         return $this->schoolFeeModel->deleteChildProfile($childId);
     }
@@ -171,9 +297,15 @@ class SchoolFeeController {
         return $this->calculationResults;
     }
     
+    /**
+     * Validate fee input data
+     */
     private function validateFeeInputs($data) {
-        // Validate required fields
-        $requiredFields = ['child_name', 'child_birthdate', 'current_level', 'annual_tuition', 'inflation_rate', 'expected_graduation_level'];
+        // Check for required fields with support for both form data and DB record format
+        $nameField = isset($data['child_name']) ? 'child_name' : 'name';
+        $birthdateField = isset($data['child_birthdate']) ? 'child_birthdate' : 'birthdate';
+        
+        $requiredFields = [$nameField, $birthdateField, 'current_level', 'annual_tuition', 'inflation_rate', 'expected_graduation_level'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 return false;
@@ -192,7 +324,7 @@ class SchoolFeeController {
         }
         
         // Validate birthdate (must be in the past)
-        $birthdate = new DateTime($data['child_birthdate']);
+        $birthdate = new DateTime($data[$birthdateField]);
         $today = new DateTime();
         if ($birthdate > $today) {
             return false;
