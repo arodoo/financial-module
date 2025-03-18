@@ -21,7 +21,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Get real estate assets for linking
-$realEstateAssets = $assetModel->getAssetsByCategory(1); // Assuming category 1 is Real Estate
+$realEstateAssets = []; // Initialize as empty array
+
+try {
+    // Get all assets and filter for real estate (category 1)
+    $allAssets = $assetModel->getAllAssets();
+    if (is_array($allAssets)) {
+        foreach ($allAssets as $asset) {
+            if (isset($asset['category_id']) && $asset['category_id'] == 1) {
+                $realEstateAssets[] = $asset;
+            }
+        }
+    }
+} catch (Exception $e) {
+    // Silently handle any errors
+}
 
 // Get saved loans
 $savedLoans = $loanController->getSavedLoans();
@@ -160,9 +174,13 @@ $results = $loanController->getCalculationResults();
                         <div class="col-12 col-sm-6">
                             <select class="form-select" name="asset_id">
                                 <option value="">Lier à un actif immobilier</option>
-                                <?php foreach ($realEstateAssets as $asset): ?>
-                                    <option value="<?php echo $asset['id']; ?>"><?php echo htmlspecialchars($asset['name']); ?></option>
-                                <?php endforeach; ?>
+                                <?php if (!empty($realEstateAssets)): ?>
+                                    <?php foreach ($realEstateAssets as $asset): ?>
+                                        <option value="<?php echo htmlspecialchars($asset['id']); ?>">
+                                            <?php echo htmlspecialchars(isset($asset['name']) ? $asset['name'] : 'Actif #' . $asset['id']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </select>
                         </div>
                         <div class="col-12">
@@ -187,7 +205,7 @@ $results = $loanController->getCalculationResults();
                             </tr>
                         </thead>
                         <tbody>
-                            <?php 
+                            <?php
                             $balance = $_POST['loan_amount'];
                             $term = $_POST['loan_term'];
                             $monthlyRate = ($_POST['interest_rate'] / 100) / 12;
@@ -195,7 +213,7 @@ $results = $loanController->getCalculationResults();
                             $totalPrincipal = 0;
                             $totalInterest = 0;
                             
-                            for ($year = 1; $year <= min($term, 30); $year++): 
+                            for ($year = 1; $year <= min($term, 30); $year++):
                                 $yearlyPrincipal = 0;
                                 $yearlyInterest = 0;
                                 
@@ -212,7 +230,6 @@ $results = $loanController->getCalculationResults();
                                         break;
                                     }
                                 }
-                                
                                 $totalPrincipal += $yearlyPrincipal;
                                 $totalInterest += $yearlyInterest;
                             ?>
@@ -275,10 +292,9 @@ document.addEventListener('DOMContentLoaded', function() {
         loanAmountInput.addEventListener('input', function(e) {
             // Remove all non-digits
             let value = this.value.replace(/\D/g, '');
-            // Format with spaces
             this.value = new Intl.NumberFormat('fr-FR').format(value);
         });
-
+        
         // Before form submission, clean the input
         loanAmountInput.form.addEventListener('submit', function(e) {
             loanAmountInput.value = loanAmountInput.value.replace(/\D/g, '');
