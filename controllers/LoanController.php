@@ -1,143 +1,293 @@
 <?php
 require_once __DIR__ . '/../models/Loan.php';
 require_once __DIR__ . '/../models/Membre.php';
+require_once __DIR__ . '/../services/CalculationService.php';
+require_once __DIR__ . '/../config/database.php'; // Add this line to ensure database.php is included
 
-/**
- * Loan Controller
- * Handles loan simulation calculations and management
- */
 class LoanController {
     private $loanModel;
-    private $membreModel;
-    private $calculationResults = null;
+    private $calculationService;
+    private $calculationResults;
+    private $loanDetails;
+    private $currentUser;
 
     public function __construct() {
+        global $id_oo;
+        
+        // Initialize models and services
         $this->loanModel = new Loan();
-        $this->membreModel = new Membre();
+        $this->calculationService = new CalculationService();
+        $this->calculationResults = null;
+        $this->loanDetails = null;
+        
+        // Store current user ID
+        $this->currentUser = ['id' => $id_oo];
     }
 
     /**
-     * Calculate loan parameters based on input
+     * Process a loan calculation based on form input
      */
     public function calculateLoan($data) {
-        $loanAmount = floatval(str_replace([' ', ','], ['', '.'], $data['loan_amount']));
-        $interestRate = floatval($data['interest_rate']);
-        $loanTermMonths = intval($data['loan_term']);
+        $loanAmount = (float)str_replace(' ', '', $data['loan_amount']);
+        $interestRate = (float)$data['interest_rate'];
+        $loanTerm = (int)$data['loan_term']; // Term is in months in the UI
         
-        // Validations
-        if ($loanAmount <= 0 || $interestRate <= 0 || $loanTermMonths <= 0) {
-            return false;
+        // Convert interest rate to monthly
+        $monthlyInterestRate = ($interestRate / 100) / 12;
+        
+        // Calculate monthly payment
+        $monthlyPayment = 0;
+        if ($monthlyInterestRate > 0) {
+            $monthlyPayment = $loanAmount * $monthlyInterestRate * pow(1 + $monthlyInterestRate, $loanTerm) / 
+                             (pow(1 + $monthlyInterestRate, $loanTerm) - 1);
+        } else {
+            $monthlyPayment = $loanAmount / $loanTerm;
         }
         
-        // Monthly interest rate (annual rate / 12 months / 100 to convert from percentage)
-        $monthlyRate = ($interestRate / 100) / 12;
-        
-        // Monthly payment calculation using the formula:
-        // M = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
-        $monthlyPayment = $loanAmount * 
-                        ($monthlyRate * pow(1 + $monthlyRate, $loanTermMonths)) / 
-                        (pow(1 + $monthlyRate, $loanTermMonths) - 1);
-        
-        // Total payment over the loan term
-        $totalPayment = $monthlyPayment * $loanTermMonths;
-        
-        // Total interest paid
+        // Calculate total payment and interest
+        $totalPayment = $monthlyPayment * $loanTerm;
         $totalInterest = $totalPayment - $loanAmount;
         
-        // Store results for later use
+        // Store results
         $this->calculationResults = [
             'monthlyPayment' => $monthlyPayment,
             'totalPayment' => $totalPayment,
             'totalInterest' => $totalInterest,
-            'loanTermMonths' => $loanTermMonths
+            'loanAmount' => $loanAmount,
+            'interestRate' => $interestRate,
+            'loanTerm' => $loanTerm
         ];
         
-        return $this->calculationResults;
+        return true;
     }
     
     /**
-     * Get the loan calculation results
-     */
-    public function getCalculationResults() {
-        return $this->calculationResults;
-    }
-    
-    /**
-     * Save a loan to the database
-     */
-    public function saveLoan($data) {
-        global $id_oo;
-        
-        $loanData = [
-            'membre_id' => $id_oo,
-            'name' => $data['loan_name'],
-            'amount' => floatval($data['loan_amount']),
-            'interest_rate' => floatval($data['interest_rate']),
-            'term' => intval($data['loan_term']),
-            'monthly_payment' => floatval($data['monthly_payment']),
-            'start_date' => $data['start_date'] ?? date('Y-m-d'),
-            'asset_id' => !empty($data['asset_id']) ? intval($data['asset_id']) : null
-        ];
-        
-        return $this->loanModel->saveLoan($loanData);
-    }
-    
-    /**
-     * Get all saved loans for the current member
+     * Get saved loans for the current user
      */
     public function getSavedLoans() {
-        global $id_oo;
-        return $this->loanModel->getLoansByMember($id_oo);
+        if (!$this->currentUser['id']) return [];
+        
+        $loans = $this->loanModel->getLoans($this->currentUser['id']);
+        
+        // Convert term from years to months for UI
+        foreach ($loans as &$loan) {
+            $loan['term_months'] = $loan['term'] * 12;
+        }
+        
+        return $loans;
+    }
+
+    /**
+     * Save a new loan
+     */
+    public function saveLoan($data) {
+        if (!$this->currentUser['id']) return false;
+        
+        $loanData = [
+            'membre_id' => $this->currentUser['id'],
+            'name' => $data['loan_name'],
+            'amount' => str_replace(' ', '', $data['loan_amount']),
+            'interest_rate' => (float)$data['interest_rate'],
+            'term' => (float)$data['loan_term'] / 12, // Convert months to years for DB
+            'monthly_payment' => (float)$data['monthly_payment'],
+            'start_date' => $data['start_date'],
+            'asset_id' => !empty($data['asset_id']) ? (int)$data['asset_id'] : null
+        ];
+        
+        $loanId = $this->loanModel->saveLoan($loanData);
+        
+        if ($loanId && !empty($data['asset_id'])) {
+            $this->loanModel->updateAssetLoanInfo(
+                $data['asset_id'], 
+                $loanId, 
+                $loanData['amount'], 
+                $loanData['monthly_payment']
+            );
+        }
+        
+        return $loanId;
     }
     
     /**
-     * Get a specific loan by ID
+     * Update an existing loan
      */
-    public function getLoan($loanId) {
-        global $id_oo;
-        return $this->loanModel->getLoan($loanId, $id_oo);
+    public function updateLoan($data) {
+        if (!$this->currentUser['id']) return false;
+        
+        $loanId = (int)$data['loan_id'];
+        $currentLoan = $this->getLoanById($loanId);
+        
+        // Prepare data for update
+        $loanData = [
+            'membre_id' => $this->currentUser['id'],
+            'name' => $data['loan_name'],
+            'amount' => str_replace(' ', '', $data['loan_amount']),
+            'interest_rate' => (float)$data['interest_rate'],
+            'term' => (float)$data['loan_term'] / 12, // Convert months to years for DB
+            'start_date' => $data['start_date'],
+            'asset_id' => !empty($data['asset_id']) ? (int)$data['asset_id'] : null
+        ];
+        
+        // Recalculate monthly payment
+        $monthlyInterestRate = ($loanData['interest_rate'] / 100) / 12;
+        $termInMonths = $loanData['term'] * 12;
+        
+        if ($monthlyInterestRate > 0) {
+            $loanData['monthly_payment'] = $loanData['amount'] * $monthlyInterestRate * pow(1 + $monthlyInterestRate, $termInMonths) / 
+                                          (pow(1 + $monthlyInterestRate, $termInMonths) - 1);
+        } else {
+            $loanData['monthly_payment'] = $loanData['amount'] / $termInMonths;
+        }
+        
+        $result = $this->loanModel->updateLoan($loanId, $loanData);
+        
+        // Handle asset relationship updates
+        if ($result) {
+            // If previously had an asset but now doesn't, or has a different asset, clear the old asset
+            if ($currentLoan && isset($currentLoan['asset_id']) && $currentLoan['asset_id'] && 
+                (!$loanData['asset_id'] || $currentLoan['asset_id'] != $loanData['asset_id'])) {
+                $this->loanModel->clearAssetLoanInfo($currentLoan['asset_id']);
+            }
+            
+            // If has a new asset, update asset info
+            if ($loanData['asset_id']) {
+                $this->loanModel->updateAssetLoanInfo(
+                    $loanData['asset_id'], 
+                    $loanId, 
+                    $loanData['amount'], 
+                    $loanData['monthly_payment']
+                );
+            }
+        }
+        
+        return $result;
     }
     
     /**
      * Delete a loan
      */
     public function deleteLoan($loanId) {
-        global $id_oo;
-        return $this->loanModel->deleteLoan($loanId, $id_oo);
+        if (!$this->currentUser['id']) return false;
+        
+        $loanId = (int)$loanId;
+        $loan = $this->getLoanById($loanId);
+        
+        // Clear asset relationship if exists
+        if ($loan && isset($loan['asset_id']) && $loan['asset_id']) {
+            $this->loanModel->clearAssetLoanInfo($loan['asset_id']);
+        }
+        
+        return $this->loanModel->deleteLoan($loanId, $this->currentUser['id']);
     }
     
     /**
-     * Generate amortization schedule
+     * Get data for the view
      */
-    public function generateAmortizationSchedule($loanAmount, $interestRate, $loanTerm) {
-        $schedule = [];
-        $balance = $loanAmount;
-        $monthlyRate = ($interestRate / 100) / 12;
+    public function getViewData() {
+        $data = [];
         
-        // Calculate monthly payment
-        $totalPayments = $loanTerm * 12;
-        $monthlyPayment = $loanAmount * 
-                        ($monthlyRate * pow(1 + $monthlyRate, $totalPayments)) / 
-                        (pow(1 + $monthlyRate, $totalPayments) - 1);
+        // Get all saved loans for the current user
+        $data['loans'] = $this->getSavedLoans();
         
-        for ($month = 1; $month <= $totalPayments; $month++) {
-            $interestPayment = $balance * $monthlyRate;
-            $principalPayment = $monthlyPayment - $interestPayment;
+        // Check if a specific loan is requested to view
+        if (isset($_GET['view_loan'])) {
+            $loanId = (int)$_GET['view_loan'];
+            $loan = $this->getLoanById($loanId);
             
-            $balance -= $principalPayment;
-            if ($balance < 0) $balance = 0;
-            
-            $schedule[] = [
-                'month' => $month,
-                'payment' => $monthlyPayment,
-                'principal' => $principalPayment,
-                'interest' => $interestPayment,
-                'balance' => $balance
-            ];
-            
-            if ($balance <= 0) break;
+            if ($loan) {
+                // Convert term from years to months for UI display
+                $loan['term'] = $loan['term'] * 12;
+                $data['viewLoan'] = $loan;
+            }
         }
         
-        return $schedule;
+        // Check if a specific loan is requested to edit
+        if (isset($_GET['edit_loan'])) {
+            $loanId = (int)$_GET['edit_loan'];
+            $loan = $this->getLoanById($loanId);
+            
+            if ($loan) {
+                // Convert term from years to months for UI display
+                $loan['term'] = $loan['term'] * 12;
+                $data['editLoan'] = $loan;
+            }
+        }
+        
+        // Include calculation results if available
+        if ($this->calculationResults) {
+            $data['calculationResults'] = $this->calculationResults;
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Get loan by ID
+     */
+    public function getLoanById($id) {
+        if (!$this->currentUser['id']) return null;
+        
+        return $this->loanModel->getLoan($id, $this->currentUser['id']);
+    }
+    
+    /**
+     * Calculate loan details for a specific loan
+     */
+    public function calculateLoanDetails($loan) {
+        if (!$loan) return;
+        
+        $balance = $loan['amount'];
+        $term = $loan['term']; // Term is in months here (already converted in getViewData)
+        $monthlyRate = ($loan['interest_rate'] / 100) / 12;
+        $monthlyPayment = $loan['monthly_payment'];
+        
+        // Calculate months elapsed since loan start
+        $startDate = new DateTime($loan['start_date']);
+        $today = new DateTime();
+        $monthsElapsed = (($today->format('Y') - $startDate->format('Y')) * 12) + 
+                         ($today->format('n') - $startDate->format('n'));
+        $monthsElapsed = max(0, min($monthsElapsed, $term));
+        
+        $principalPaid = 0;
+        $interestPaid = 0;
+        $currentBalance = $balance;
+        
+        // Calculate principal and interest paid so far
+        for ($i = 0; $i < $monthsElapsed; $i++) {
+            $interestForMonth = $currentBalance * $monthlyRate;
+            $principalForMonth = $monthlyPayment - $interestForMonth;
+            
+            $principalPaid += $principalForMonth;
+            $interestPaid += $interestForMonth;
+            $currentBalance -= $principalForMonth;
+            
+            if ($currentBalance <= 0) {
+                $currentBalance = 0;
+                break;
+            }
+        }
+        
+        $this->loanDetails = [
+            'currentBalance' => $currentBalance,
+            'principalPaid' => $principalPaid,
+            'interestPaid' => $interestPaid,
+            'monthsElapsed' => $monthsElapsed,
+            'monthsRemaining' => $term - $monthsElapsed
+        ];
+    }
+    
+    /**
+     * Get loan details
+     */
+    public function getLoanDetails() {
+        return $this->loanDetails;
+    }
+    
+    /**
+     * Get calculation results
+     */
+    public function getCalculationResults() {
+        return $this->calculationResults;
     }
 }
+?>
