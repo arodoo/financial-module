@@ -35,6 +35,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
 include __DIR__ . '/widgets/summary-header.php';
 include __DIR__ . '/widgets/summary-cards.php';
 include __DIR__ . '/widgets/loan-summary.php';
+include __DIR__ . '/widgets/school-fee-summary.php';
 ?>
 
 <div class="row">
