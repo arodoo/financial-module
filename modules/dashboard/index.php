@@ -91,7 +91,7 @@ $assetsByCategory = $assetModel->getAssetsByCategory();
             <div class="card-body">
                 <?php
                 $loanModel = new Loan();
-                $activeLoans = $loanModel->getLoansByMember($id_oo);
+                $activeLoans = $loanModel->getLoans($id_oo);
                 $totalMonthlyPayments = 0;
                 
                 if (empty($activeLoans)): ?>

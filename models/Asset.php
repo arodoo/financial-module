@@ -3,7 +3,9 @@ require_once __DIR__ . '/../config/database.php';
 
 class Asset {
     private $conn;
-    
+    private $table = 'assets';
+    private $categories_table = 'asset_categories';
+
     public function __construct() {
         $this->conn = getDbConnection();
     }
@@ -240,6 +242,203 @@ class Asset {
         $stmt->execute();
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get all asset categories
+     * @return array Array of asset categories
+     */
+    public function getCategories() {
+        try {
+            $query = "SELECT * FROM {$this->categories_table} ORDER BY name ASC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            // Log error and return empty array
+            error_log("Error fetching asset categories: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get assets by member ID
+     * @param int $membre_id Member ID
+     * @return array Array of assets
+     */
+    public function getAssetsByMemberId($membre_id) {
+        try {
+            $query = "SELECT * FROM {$this->table} WHERE membre_id = :membre_id ORDER BY created_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':membre_id', $membre_id);
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            // Log error and return empty array
+            error_log("Error fetching assets by member ID: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Get all assets for a user
+     * @param int $membre_id Member ID
+     * @return array Array of assets
+     */
+    public function getUserAssets($membre_id) {
+        // This is an alias for getAssetsByMemberId for backward compatibility
+        return $this->getAssetsByMemberId($membre_id);
+    }
+    
+    /**
+     * Get asset by ID
+     * @param int $id Asset ID
+     * @return array|null Asset data or null if not found
+     */
+    public function getAssetById($id) {
+        try {
+            $query = "SELECT * FROM {$this->table} WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+            
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? $result : null;
+        } catch (Exception $e) {
+            // Log error and return null
+            error_log("Error fetching asset by ID: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Save a new asset
+     * @param array $data Asset data
+     * @return int|bool New asset ID or false on failure
+     */
+    public function saveAsset($data) {
+        try {
+            $query = "INSERT INTO {$this->table} 
+                     (membre_id, name, category_id, acquisition_date, acquisition_value, 
+                      valuation_date, current_value, location, notes) 
+                     VALUES 
+                     (:membre_id, :name, :category_id, :acquisition_date, :acquisition_value, 
+                      :valuation_date, :current_value, :location, :notes)";
+            
+            $stmt = $this->conn->prepare($query);
+            
+            // Clean and bind data
+            $name = htmlspecialchars(strip_tags($data['name']));
+            $location = !empty($data['location']) ? htmlspecialchars(strip_tags($data['location'])) : null;
+            $notes = !empty($data['notes']) ? htmlspecialchars(strip_tags($data['notes'])) : null;
+            
+            $stmt->bindParam(':membre_id', $data['membre_id']);
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':category_id', $data['category_id']);
+            $stmt->bindParam(':acquisition_date', $data['acquisition_date']);
+            $stmt->bindParam(':acquisition_value', $data['acquisition_value']);
+            $stmt->bindParam(':valuation_date', $data['valuation_date']);
+            $stmt->bindParam(':current_value', $data['current_value']);
+            $stmt->bindParam(':location', $location);
+            $stmt->bindParam(':notes', $notes);
+            
+            if ($stmt->execute()) {
+                return $this->conn->lastInsertId();
+            }
+            
+            return false;
+        } catch (Exception $e) {
+            // Log error and return false
+            error_log("Error saving asset: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Update an existing asset in the database
+     * @param int $id Asset ID
+     * @param array $data Asset data
+     * @return bool Success or failure
+     */
+    public function updateAssetInDb($id, $data) {
+        try {
+            $query = "UPDATE {$this->table} SET
+                      name = :name,
+                      category_id = :category_id,
+                      acquisition_date = :acquisition_date,
+                      acquisition_value = :acquisition_value,
+                      valuation_date = :valuation_date,
+                      current_value = :current_value,
+                      location = :location,
+                      notes = :notes
+                      WHERE id = :id AND membre_id = :membre_id";
+            
+            $stmt = $this->conn->prepare($query);
+            
+            // Clean and bind data
+            $name = htmlspecialchars(strip_tags($data['name']));
+            $location = !empty($data['location']) ? htmlspecialchars(strip_tags($data['location'])) : null;
+            $notes = !empty($data['notes']) ? htmlspecialchars(strip_tags($data['notes'])) : null;
+            
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':category_id', $data['category_id']);
+            $stmt->bindParam(':acquisition_date', $data['acquisition_date']);
+            $stmt->bindParam(':acquisition_value', $data['acquisition_value']);
+            $stmt->bindParam(':valuation_date', $data['valuation_date']);
+            $stmt->bindParam(':current_value', $data['current_value']);
+            $stmt->bindParam(':location', $location);
+            $stmt->bindParam(':notes', $notes);
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':membre_id', $data['membre_id']);
+            
+            return $stmt->execute();
+        } catch (Exception $e) {
+            // Log error and return false
+            error_log("Error updating asset: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Delete an asset by ID and member ID
+     * @param int $id Asset ID
+     * @param int $membre_id Member ID for security check
+     * @return bool Success or failure
+     */
+    public function deleteAssetWithMemberId($id, $membre_id) {
+        try {
+            $query = "DELETE FROM {$this->table} WHERE id = :id AND membre_id = :membre_id";
+            $stmt = $this->conn->prepare($query);
+            
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':membre_id', $membre_id);
+            
+            return $stmt->execute();
+        } catch (Exception $e) {
+            // Log error and return false
+            error_log("Error deleting asset: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Get all assets (admin function)
+     * @return array Array of all assets
+     */
+    public function getAllAssetsAdmin() {
+        try {
+            $query = "SELECT * FROM {$this->table} ORDER BY created_at DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            // Log error and return empty array
+            error_log("Error fetching all assets: " . $e->getMessage());
+            return [];
+        }
     }
 }
 ?>
