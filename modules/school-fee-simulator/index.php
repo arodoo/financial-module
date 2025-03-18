@@ -106,7 +106,7 @@ if ($selectedChild && !$editChild && !$results) {
                     <div class="mb-3">
                         <label for="annual_tuition" class="form-label">Frais de scolarité annuels (€)</label>
                         <input type="text" class="form-control" id="annual_tuition" name="annual_tuition" 
-                            pattern="[0-9 ]*" 
+                             
                             value="<?php echo $editChild ? number_format($editChild['annual_tuition'], 0, ',', ' ') : ($selectedChild ? number_format($selectedChild['annual_tuition'], 0, ',', ' ') : ''); ?>" required>
                     </div>
                     
@@ -146,37 +146,6 @@ if ($selectedChild && !$editChild && !$results) {
                 </form>
             </div>
         </div>
-        
-        <!-- Saved Children Profiles -->
-        <?php if (!empty($children)): ?>
-        <div class="card">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Profils d'Enfants Enregistrés</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <?php foreach ($children as $child): ?>
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1"><?php echo htmlspecialchars($child['name']); ?></h6>
-                            <small><?php echo date('d/m/Y', strtotime($child['birthdate'])); ?></small>
-                        </div>
-                        <p class="mb-1">
-                            École: <?php echo htmlspecialchars($child['school_name']); ?> | 
-                            Niveau: <?php echo $educationLevels[$child['current_level']]['name']; ?>
-                        </p>
-                        <div class="d-flex mt-2">
-                            <a href="?action=school-fee&view_child=<?php echo $child['id']; ?>" class="btn btn-sm btn-info me-1">Voir</a>
-                            <a href="?action=school-fee&edit_child=<?php echo $child['id']; ?>" class="btn btn-sm btn-warning me-1">Modifier</a>
-                            <a href="?action=school-fee&delete_child=<?php echo $child['id']; ?>" class="btn btn-sm btn-danger" 
-                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce profil?')">Supprimer</a>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
     </div>
     
     <!-- Calculation Results -->
