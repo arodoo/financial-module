@@ -4,7 +4,6 @@
 <div class="card">
     <div class="card-header bg-light d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Liste des Actifs</h5>
-        <a href="?action=asset-management" class="btn btn-sm btn-primary">Ajouter un actif</a>
     </div>
     <div class="card-body">
         <div class="table-responsive">
