@@ -1,0 +1,48 @@
+/* Shared styles for DataTables across modules */
+
+/* Ensure action buttons are always visible */
+.action-column {
+    white-space: nowrap !important;
+    min-width: 100px !important;
+    text-align: center !important;
+}
+
+.action-column button, .action-column a {
+    display: inline-block !important;
+    margin: 2px !important;
+}
+
+/* Force horizontal scroll on mobile */
+@media screen and (max-width: 767px) {
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .dataTables_wrapper .row {
+        margin: 0;
+    }
+    
+    /* Ensure table takes full width */
+    table.dataTable {
+        width: 100% !important;
+        min-width: 700px; /* Ensure table is wide enough to force scrolling */
+    }
+    
+    /* Ensure all cells have proper width */
+    table.dataTable th, 
+    table.dataTable td {
+        white-space: nowrap;
+        min-width: 80px;
+    }
+    
+    /* Keep amount/value aligned right */
+    table.dataTable td:nth-child(3) {
+        text-align: right !important;
+    }
+}
+
+/* Common styles for table buttons */
+.btn-sm i {
+    margin: 0;
+}
